@@ -49,6 +49,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import dev.startupstack.codesyncservice.sync.models.SyncRequestModel;
 import dev.startupstack.codesyncservice.utils.ArchiveUtils;
 
 /**
@@ -58,7 +59,7 @@ import dev.startupstack.codesyncservice.utils.ArchiveUtils;
 public class SyncServiceImpl implements SyncService {
 
     @Override
-    public Response syncRepository(String name) {
+    public Response syncRepository(SyncRequestModel model) {
 
         File checkoutDir = new File("/home/jorn/checkout");
 

@@ -16,23 +16,27 @@
 * LICENSE file.  Alternatively, see <http://www.gnu.org/licenses/>.
 */
 
-package dev.startupstack.codesyncservice.git;
+package dev.startupstack.codesyncservice.github;
 
 import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.Response;
+
+import dev.startupstack.codesyncservice.github.entity.GitEntity;
 
 /**
  * GitSyncService
  */
 @Dependent
-public interface GitService {
+public interface GitHubService {
 
-    public Response getRepository(String repo);
+    public Response getRepositoryByID(Long id);
 
-    public Response updateRepository(String repo);
+    public Response getRepositoriesByTenantID(String tenantID);
 
-    public Response deleteRepository(String repo);
+    public Response updateRepository(GitEntity entity);
 
-    public Response createRepository(String repo);
+    public Response deleteRepository(Long id);
+
+    public Response createRepository(GitEntity entity);
     
 }

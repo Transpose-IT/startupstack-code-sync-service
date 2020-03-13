@@ -21,13 +21,15 @@ package dev.startupstack.codesyncservice.sync;
 import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.Response;
 
+import dev.startupstack.codesyncservice.sync.models.SyncRequestModel;
+
 /**
  * GitSyncService
  */
 @Dependent
 public interface SyncService {
 
-    public Response syncRepository(String repo);
+    public Response syncRepository(SyncRequestModel model);
 
    
 }

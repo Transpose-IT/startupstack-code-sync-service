@@ -21,8 +21,11 @@ package dev.startupstack.codesyncservice.sync;
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -35,26 +38,29 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import dev.startupstack.codesyncservice.sync.models.SyncRequestModel;
+
 import static dev.startupstack.codesyncservice.Constants.*;
 
 @RequestScoped
 @Path(SYNC_URL)
 @Tag(name = "sync")
 //@RolesAllowed({ROLE_TENANT_ADMIN, ROLE_TENANT_USER})
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 public class SyncResource {
 
     @Inject
     SyncService syncService;
 
-    @GET
+    @POST
     @Operation(summary = "Trigger a sync of a given git repository")
     //@APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ObjectInfoModel.class)))
     @APIResponse(responseCode = "401", description = "No valid JWT token found")
     @APIResponse(responseCode = "403", description = "Not authorized for this git repository")
     @APIResponse(responseCode = "404", description = "Git repository not found (it must be registered first with the /git API)")
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{repository}")
-    public Response getObjectInfo(@NotBlank @PathParam("repository") final String repository) {
-         return syncService.syncRepository(repository);
+    public Response getObjectInfo(@Valid SyncRequestModel model) {
+         return syncService.syncRepository(model);
     }
 }
