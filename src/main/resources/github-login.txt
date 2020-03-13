@@ -1,0 +1,1 @@
+https://github.com/login/oauth/authorize?client_id=75eca4a3c0695d0c6198&scope=repo&state=state_123&redirect_uri=http://localhost:8080/oauth/callback
