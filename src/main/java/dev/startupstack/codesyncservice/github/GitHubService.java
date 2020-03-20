@@ -21,7 +21,7 @@ package dev.startupstack.codesyncservice.github;
 import javax.enterprise.context.Dependent;
 import javax.ws.rs.core.Response;
 
-import dev.startupstack.codesyncservice.github.entity.GitEntity;
+import dev.startupstack.codesyncservice.github.entity.GitHubEntity;
 
 /**
  * GitSyncService
@@ -33,10 +33,10 @@ public interface GitHubService {
 
     public Response getRepositoriesByTenantID(String tenantID);
 
-    public Response updateRepository(GitEntity entity);
+    public Response updateRepository(GitHubEntity entity);
 
     public Response deleteRepository(Long id);
 
-    public Response createRepository(GitEntity entity);
+    public Response createRepository(GitHubEntity entity);
     
 }

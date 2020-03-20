@@ -25,6 +25,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import dev.startupstack.codesyncservice.oauth.entity.OauthTokenEntity;
+import dev.startupstack.codesyncservice.oauth.models.AccessTokenResponseModel;
 import dev.startupstack.codesyncservice.utils.WebResponseBuilder;
 
 import static javax.transaction.Transactional.TxType.REQUIRED;
@@ -55,6 +56,12 @@ public class GithubTokenServiceImpl implements GithubTokenService{
 	public Response processGithubCallback(OauthTokenEntity entity) {
 
         LOG.infof("[%s] Processing Github response request ...", entity.tenant_id);
+
+        if (entity.error != null) {
+            System.out.println(entity.toString());
+            LOG.errorf("[%s] Processing Github response request: FAILED - %s", entity.tenant_id, entity.error);
+            return WebResponseBuilder.build(entity.error, Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        }
 
         Map<Object, Object> data = new HashMap<>();
 
@@ -104,7 +111,7 @@ public class GithubTokenServiceImpl implements GithubTokenService{
     }
 
     static HttpRequest.BodyPublisher formDataBuilder(Map<Object, Object> data) {
-        var builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         for (Map.Entry<Object, Object> entry : data.entrySet()) {
             if (builder.length() > 0) {
                 builder.append("&");
@@ -126,7 +133,7 @@ public class GithubTokenServiceImpl implements GithubTokenService{
 			return Response.status(Status.NOT_FOUND).build();
         }
         LOG.infof("[%s] Retrieving access token: OK", tenantID);
-        return Response.ok(entity.access_token).build();
+        return Response.ok(new AccessTokenResponseModel(entity.access_token)).build();
     }
 
     @Override

@@ -28,7 +28,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * GitEntity
  */
 @Entity
-public class GitEntity extends PanacheEntity  {
+public class GitHubEntity extends PanacheEntity  {
 
     @NotBlank
     public String tenantID;
@@ -38,7 +38,7 @@ public class GitEntity extends PanacheEntity  {
 
     @Column(columnDefinition = "TEXT")
     @NotBlank
-    public String repositoryURL;
+    public String repositoryURI;
 
     @NotBlank
     public String branch;
@@ -51,7 +51,7 @@ public class GitEntity extends PanacheEntity  {
     public String toString() {
         return "{" +
             " tenantID='" + tenantID + "'" +
-            ", repositoryURL='" + repositoryURL + "'" +
+            ", repositoryURL='" + repositoryURI + "'" +
             ", branch='" + branch + "'" +
             ", commitID='" + commitID + "'" +
             "}";

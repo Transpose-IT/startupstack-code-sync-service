@@ -30,5 +30,6 @@ public class Constants {
     public static final String ROLE_TENANT_USER = "tenant_user";
     public static final String ROLE_TENANT_ADMIN = "tenant_admin";
 
+    public static final String REPO_TYPE_GITHUB = "github";
 
 }

@@ -29,7 +29,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.jboss.logging.Logger;
 
-import dev.startupstack.codesyncservice.github.entity.GitEntity;
+import dev.startupstack.codesyncservice.github.entity.GitHubEntity;
 
 /**
  * GitSyncServiceImpl
@@ -45,7 +45,7 @@ public class GitHubServiceImpl implements GitHubService {
 	public Response getRepositoryByID(Long id) {
 
 		LOG.infof("Retrieving git repository ID %s ...", id);
-		GitEntity entity = GitEntity.findById(id);
+		GitHubEntity entity = GitHubEntity.findById(id);
 
 		if (entity == null) {
 			LOG.warnf("Retrieving git repository ID %s: NOT FOUND", id);
@@ -60,7 +60,7 @@ public class GitHubServiceImpl implements GitHubService {
 	@Transactional(SUPPORTS)
 	public Response getRepositoriesByTenantID(String tenantID) {
 		LOG.infof("Retrieving git repositories for tenant '%s' ... ", tenantID);
-		List<GitEntity> result = GitEntity.list("tenantid", tenantID);
+		List<GitHubEntity> result = GitHubEntity.list("tenantid", tenantID);
 
 		if (result.isEmpty()) {
 			LOG.warnf("Retrieving git repositories for tenant '%s': NOT FOUND", tenantID);
@@ -71,32 +71,30 @@ public class GitHubServiceImpl implements GitHubService {
 	}
 
 	@Override
-	public Response updateRepository(GitEntity updatedEntity) {
+	public Response updateRepository(GitHubEntity updatedEntity) {
 
-		LOG.infof("Updating git repository ID %s ...", updatedEntity.id);
-
-		GitEntity entity = GitEntity.findById(updatedEntity.id);
+		LOG.infof("Updating git repository ID '%s' ...", updatedEntity.id);
+		GitHubEntity entity = GitHubEntity.findById(updatedEntity.id);
 
 		if (entity == null) {
-			LOG.warnf("Updating repository ID %s: NOT FOUND", updatedEntity.id);
+			LOG.warnf("Updating repository ID '%s': NOT FOUND", updatedEntity.id);
 			return Response.status(Status.NOT_FOUND).build();
 		}
 
 		entity.branch = updatedEntity.branch;
 		entity.commitID = updatedEntity.commitID;
 		entity.repositoryName = updatedEntity.repositoryName;
-		entity.repositoryURL = updatedEntity.repositoryURL;
-
-		entity.persist();
-
+		entity.repositoryURI = updatedEntity.repositoryURI;
+        entity.persist();
+        
+		LOG.infof("Updating git repository ID '%s': OK", updatedEntity.id);
 		return Response.ok(entity).build();
-
 	}
 
 	@Override
 	public Response deleteRepository(Long id) {
 		LOG.infof("Deleting repository ID %s ...", id);
-		GitEntity entity = GitEntity.findById(id);
+		GitHubEntity entity = GitHubEntity.findById(id);
 
 		if (entity == null) {
 			LOG.warnf("Deleting git repository ID %s: NOT FOUND", id);
@@ -108,11 +106,10 @@ public class GitHubServiceImpl implements GitHubService {
 	}
 
 	@Override
-	public Response createRepository(GitEntity entity) {
+	public Response createRepository(GitHubEntity entity) {
 		LOG.infof("Creating new repository '%s' ...", entity.repositoryName);
 		entity.persist();
 		LOG.infof("Creating new repository: OK - Got ID '%s'", entity.id);
 		return Response.status(Status.CREATED).build();
 	}
-
 }

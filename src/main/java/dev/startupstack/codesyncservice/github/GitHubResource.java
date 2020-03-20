@@ -18,11 +18,11 @@
 
 package dev.startupstack.codesyncservice.github;
 
-import javax.annotation.security.RolesAllowed;
+import static dev.startupstack.codesyncservice.Constants.GIT_URL;
+
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -33,17 +33,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-import dev.startupstack.codesyncservice.github.entity.GitEntity;
-
-import static dev.startupstack.codesyncservice.Constants.*;
+import dev.startupstack.codesyncservice.github.entity.GitHubEntity;
 
 @RequestScoped
 @Path(GIT_URL)
@@ -58,18 +55,17 @@ public class GitHubResource {
 
     @POST
     @Operation(summary = "Registers a new git repository for the code sync service")
-    //@APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = RepositoriesResponseModel.class)))
     @APIResponse(responseCode = "201", description = "Git repository created" )
     @APIResponse(responseCode = "401", description = "No valid JWT token found")
     @APIResponse(responseCode = "403", description = "Not authorized to query this repository")
-    public Response createRepository(@Valid GitEntity entity) {
+    public Response createRepository(@Valid GitHubEntity entity) {
         return gitService.createRepository(entity);
     }
 
     @GET
     @Path("/{id}")
     @Operation(summary = "Gets an existing git repository by internal id")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = GitEntity.class)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = GitHubEntity.class)))
     @APIResponse(responseCode = "401", description = "No valid JWT token found")
     @APIResponse(responseCode = "403", description = "Not authorized to query this repository")
     @APIResponse(responseCode = "404", description = "No record found with given ID" )
@@ -80,18 +76,18 @@ public class GitHubResource {
     @PUT
     @Path("/{id}")
     @Operation(summary = "Updates a repository with new values")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = GitEntity.class)))
+    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = GitHubEntity.class)))
     @APIResponse(responseCode = "401", description = "No valid JWT token found")
     @APIResponse(responseCode = "403", description = "Not authorized to query this repository")
     @APIResponse(responseCode = "404", description = "Repository not found" )
-    public Response updateRepository (@Valid GitEntity entity) {
+    public Response updateRepository (@Valid GitHubEntity entity) {
         return gitService.updateRepository(entity);
     }
 
     @DELETE
     @Path("/{id}")
     @Operation(summary = "Deletes a repository")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = GitEntity.class)))
+    @APIResponse(responseCode = "204", description = "Repository successfully deleted")
     @APIResponse(responseCode = "401", description = "No valid JWT token found")
     @APIResponse(responseCode = "403", description = "Not authorized to query this repository")
     @APIResponse(responseCode = "404", description = "Repository not found" )
@@ -101,8 +97,8 @@ public class GitHubResource {
 
     @GET
     @Path("/tenant/{id}")
-    @Operation(summary = "Gets an existing git repository by internal id")
-    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = GitEntity.class)))
+    @Operation(summary = "Gets all existing repositories by tenant ID")
+    @APIResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = GitHubEntity.class)))
     @APIResponse(responseCode = "401", description = "No valid JWT token found")
     @APIResponse(responseCode = "403", description = "Not authorized to query this repository")
     @APIResponse(responseCode = "404", description = "No records found for this tenant ID" )
