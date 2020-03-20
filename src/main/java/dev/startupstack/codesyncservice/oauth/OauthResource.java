@@ -32,11 +32,12 @@ public class OauthResource {
     @Path("/github")
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    public Response processGithubCallback(@QueryParam("code") final String code, @QueryParam("state") final String state) throws IOException {
+    public Response processGithubCallback(@QueryParam("code") final String code, @QueryParam("state") final String state, @QueryParam("error") final String error) throws IOException {
 
         OauthTokenEntity entity = new OauthTokenEntity();
         entity.code = code;
         entity.tenant_id = state;
+        entity.error = error;
 
         return githubTokenService.processGithubCallback(entity);
         

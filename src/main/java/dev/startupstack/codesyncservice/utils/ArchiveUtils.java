@@ -29,6 +29,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.jboss.logging.Logger;
 
 /**
  * ArchiveUtils
@@ -36,14 +37,16 @@ import org.apache.commons.compress.utils.IOUtils;
 @Dependent
 public class ArchiveUtils {
 
-    public void createTarGZ(String name, File... files) throws IOException {
+    private static final Logger LOG = Logger.getLogger(ArchiveUtils.class);
+
+    public static void createTarGZ(String name, File... files) throws IOException {
         try (TarArchiveOutputStream out = getTarArchiveOutputStream(name)){
             for (File file : files){
                 addToArchiveCompression(out, file, ".");
             }
         }
     }
-    TarArchiveOutputStream getTarArchiveOutputStream(String name) throws IOException {
+    static TarArchiveOutputStream getTarArchiveOutputStream(String name) throws IOException {
         TarArchiveOutputStream taos = new TarArchiveOutputStream(new GzipCompressorOutputStream(new FileOutputStream(name)));
         // TAR has an 8 gig file limit by default, this gets around that
         taos.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_STAR);
@@ -64,7 +67,12 @@ public class ArchiveUtils {
             File[] children = file.listFiles();
             if (children != null){
                 for (File child : children){
-                    addToArchiveCompression(out, child, entry);
+                    if (child.getName().equals(".git")) {
+                        LOG.debug("Skipping .git dir");
+                    } else {
+                        LOG.debugf("Adding file %s to archive ", child.getName());
+                        addToArchiveCompression(out, child, entry);
+                    }
                 }
             }
         } else {

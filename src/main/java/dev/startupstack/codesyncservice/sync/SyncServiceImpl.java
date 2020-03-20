@@ -19,38 +19,28 @@ package dev.startupstack.codesyncservice.sync;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.UUID;
+
+import javax.enterprise.context.Dependent;
+import javax.inject.Inject;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.jboss.logging.Logger;
 
-import dev.startupstack.codesyncservice.utils.WebResponseBuilder;
-
-
-import javax.annotation.security.RolesAllowed;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.validation.constraints.NotBlank;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.media.Content;
-import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
-
+import dev.startupstack.codesyncservice.github.GitHubService;
+import dev.startupstack.codesyncservice.github.entity.GitHubEntity;
+import dev.startupstack.codesyncservice.oauth.models.AccessTokenResponseModel;
+import dev.startupstack.codesyncservice.oauth.services.GithubTokenService;
 import dev.startupstack.codesyncservice.sync.models.SyncRequestModel;
 import dev.startupstack.codesyncservice.utils.ArchiveUtils;
+import dev.startupstack.codesyncservice.utils.WebResponseBuilder;
+
+import static dev.startupstack.codesyncservice.Constants.REPO_TYPE_GITHUB;
 
 /**
  * GitSyncServiceImpl
@@ -58,38 +48,71 @@ import dev.startupstack.codesyncservice.utils.ArchiveUtils;
 @Dependent
 public class SyncServiceImpl implements SyncService {
 
+    @Inject
+    GithubTokenService githubTokenService;
+
+    @Inject
+    GitHubService githubService;
+
+    private static final Logger LOG = Logger.getLogger(SyncServiceImpl.class);
+
     @Override
     public Response syncRepository(SyncRequestModel model) {
 
-        File checkoutDir = new File("/home/jorn/checkout");
+        LOG.infof("[%s] Syncing repository id '%s': starting ...", model.getTenantID(), model.getRepositoryID());
+
+        File workDir = new File("/tmp/" + model.getTenantID());
+        File checkoutDir = new File(workDir + "/checkout");
+        String tarball = String.format("%s/%s.tar.gz", workDir, UUID.randomUUID().toString());
 
         try {
-            cloneRepository(checkoutDir);
-            ArchiveUtils archiveUtils = new ArchiveUtils();
-            archiveUtils.createTarGZ("test.tar.gz", checkoutDir);
+            if (model.getRepositoryType() == REPO_TYPE_GITHUB) {
+                cloneGitHubRepository(checkoutDir, model);
+            } else {
+                return WebResponseBuilder.build("Invalid repository type passed", Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            }
+            LOG.infof("[%s] Syncing repository id '%s': Creating tarball '%s'", model.getTenantID(), model.getRepositoryID(), tarball);
+            ArchiveUtils.createTarGZ(tarball, checkoutDir);
+
 
         } catch (GitAPIException gae) {
+
+            LOG.errorf("[%s] Syncing repository id '%s': FAILED - %s", model.getTenantID(), model.getRepositoryID(), gae.getMessage());
             return WebResponseBuilder.build(gae.getMessage(), Status.UNAUTHORIZED.getStatusCode());
     
         } catch (IOException ioe) {
+            LOG.errorf("[%s] Syncing repository id '%s': FAILED - %s", model.getTenantID(), model.getRepositoryID(), ioe.getMessage());
             return WebResponseBuilder.build(ioe.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
        return Response.status(Status.OK).build();
     
     }
 
-    void cloneRepository(File checkoutDir) throws GitAPIException, IOException {
+    void cloneGitHubRepository(File checkoutDir, SyncRequestModel model) throws GitAPIException, IOException {
     
-        // if (checkoutDir.exists()) {
-        //     FileUtils.deleteDirectory(checkoutDir);
-        // }
+        LOG.infof("[%s] Syncing repository id '%s': cloning github repository", model.getTenantID(), model.getRepositoryID());
 
-        // Git.cloneRepository()
-        // .setCredentialsProvider(new UsernamePasswordCredentialsProvider("<token>", ""))
-        // .setURI("https://github.com/jargelo/test-private-repo")
-        // .setBranch("master")
-        // .setDirectory(checkoutDir)
-        // .call();
+        if (checkoutDir.exists()) {
+            FileUtils.deleteDirectory(checkoutDir);
+        }
 
+        AccessTokenResponseModel tokenResponse = (AccessTokenResponseModel) githubTokenService.getAccessToken(model.getTenantID()).getEntity();
+        GitHubEntity githubEntity = (GitHubEntity) githubService.getRepositoryByID(model.getRepositoryID()).getEntity();
+
+        Git gitrepo = Git.cloneRepository()
+            .setCredentialsProvider(new UsernamePasswordCredentialsProvider(tokenResponse.getAccessToken(), ""))
+            .setURI(githubEntity.repositoryURI)
+            .setBranch(githubEntity.branch)
+            .setDirectory(checkoutDir)
+            .call();
+
+        githubEntity.commitID = gitrepo.getRepository().getRefDatabase().findRef("HEAD").getObjectId().getName();
+
+        LOG.infof("[%s] Syncing repository id '%s': clone succcessful on branch '%s' with commit id '%s' ", 
+            model.getTenantID(), model.getRepositoryID(), githubEntity.branch, githubEntity.commitID);
+
+        githubService.updateRepository(githubEntity);
+
+        LOG.infof("[%s] Syncing repository id '%s': commit ID saved to entity", model.getTenantID());
     }
 }

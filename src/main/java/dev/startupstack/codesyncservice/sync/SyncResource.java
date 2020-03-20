@@ -31,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -39,6 +40,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import dev.startupstack.codesyncservice.sync.models.SyncRequestModel;
+import dev.startupstack.codesyncservice.utils.WebResponseBuilder;
 
 import static dev.startupstack.codesyncservice.Constants.*;
 
@@ -59,7 +61,6 @@ public class SyncResource {
     @APIResponse(responseCode = "401", description = "No valid JWT token found")
     @APIResponse(responseCode = "403", description = "Not authorized for this git repository")
     @APIResponse(responseCode = "404", description = "Git repository not found (it must be registered first with the /git API)")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getObjectInfo(@Valid SyncRequestModel model) {
          return syncService.syncRepository(model);
     }
